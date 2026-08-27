@@ -1,0 +1,1714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>PixelPie AI</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+--bg:#08090d;
+--sidebar:#0d0f15;
+--panel:#11141c;
+--panel2:#171a23;
+--border:rgba(255,255,255,.08);
+--text:#f5f7fb;
+--muted:#8e96a8;
+--accent:#7c5cff;
+--accent2:#a894ff;
+--user:#25203e
+}
+
+body{
+font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+background:var(--bg);
+color:var(--text);
+height:100vh;
+overflow:hidden
+}
+
+button,textarea,input{font:inherit}
+button{border:0;cursor:pointer}
+
+.app{display:flex;height:100vh}
+
+.sidebar{
+width:270px;
+background:var(--sidebar);
+border-right:1px solid var(--border);
+display:flex;
+flex-direction:column;
+padding:18px;
+z-index:20
+}
+
+.logo{
+display:flex;
+align-items:center;
+gap:12px;
+margin-bottom:25px
+}
+
+.logo-icon{
+width:42px;
+height:42px;
+border-radius:13px;
+background:linear-gradient(135deg,#7c5cff,#b49cff);
+display:grid;
+place-items:center;
+font-size:21px;
+box-shadow:0 8px 30px rgba(124,92,255,.3)
+}
+
+.logo-text{font-size:19px;font-weight:700}
+.logo-text span{color:var(--accent2)}
+
+.new-chat{
+width:100%;
+padding:12px 14px;
+border-radius:11px;
+background:var(--accent);
+color:white;
+font-weight:600;
+margin-bottom:20px
+}
+
+.new-chat:hover{filter:brightness(1.1)}
+
+.history-title{
+color:var(--muted);
+font-size:12px;
+text-transform:uppercase;
+letter-spacing:.08em;
+margin-bottom:9px
+}
+
+.history{flex:1;overflow-y:auto}
+
+.history-item{
+padding:11px 12px;
+border-radius:9px;
+color:#c6cad5;
+cursor:pointer;
+font-size:13px;
+white-space:nowrap;
+overflow:hidden;
+text-overflow:ellipsis;
+margin-bottom:3px
+}
+
+.history-item:hover{background:rgba(255,255,255,.05)}
+
+.sidebar-bottom{
+border-top:1px solid var(--border);
+padding-top:14px
+}
+
+.settings-btn{
+width:100%;
+padding:11px;
+background:transparent;
+color:#b9bfcc;
+text-align:left;
+border-radius:9px
+}
+
+.settings-btn:hover{background:rgba(255,255,255,.05)}
+
+.main{
+flex:1;
+display:flex;
+flex-direction:column;
+min-width:0
+}
+
+.topbar{
+height:65px;
+border-bottom:1px solid var(--border);
+display:flex;
+align-items:center;
+padding:0 22px;
+gap:13px
+}
+
+.mobile-menu{
+display:none;
+background:transparent;
+color:white;
+font-size:22px
+}
+
+.status-dot{
+width:8px;
+height:8px;
+border-radius:50%;
+background:#43e083;
+box-shadow:0 0 12px #43e083
+}
+
+.top-title{font-weight:600}
+.top-subtitle{font-size:12px;color:var(--muted)}
+
+.chat{
+flex:1;
+overflow-y:auto;
+scroll-behavior:smooth
+}
+
+.chat-inner{
+width:min(900px,100%);
+margin:auto;
+padding:35px 22px 150px
+}
+
+.welcome{
+min-height:60vh;
+display:flex;
+align-items:center;
+justify-content:center;
+flex-direction:column;
+text-align:center;
+padding:30px
+}
+
+.welcome-icon{
+width:75px;
+height:75px;
+border-radius:24px;
+background:linear-gradient(135deg,#7c5cff,#b59fff);
+display:grid;
+place-items:center;
+font-size:34px;
+margin-bottom:22px;
+box-shadow:0 15px 50px rgba(124,92,255,.28)
+}
+
+.welcome h1{
+font-size:clamp(28px,5vw,46px);
+margin-bottom:10px;
+background:linear-gradient(90deg,#fff,#a99aff);
+-webkit-background-clip:text;
+color:transparent
+}
+
+.welcome p{
+color:var(--muted);
+max-width:580px;
+line-height:1.6
+}
+
+.suggestions{
+display:flex;
+flex-wrap:wrap;
+justify-content:center;
+gap:9px;
+margin-top:25px
+}
+
+.suggestion{
+background:var(--panel);
+color:#cbd0dc;
+border:1px solid var(--border);
+padding:10px 14px;
+border-radius:10px
+}
+
+.suggestion:hover{
+border-color:rgba(124,92,255,.6);
+background:var(--panel2)
+}
+
+.message{
+display:flex;
+gap:13px;
+margin-bottom:28px;
+animation:appear .2s ease
+}
+
+@keyframes appear{
+from{opacity:0;transform:translateY(5px)}
+to{opacity:1;transform:translateY(0)}
+}
+
+.avatar{
+width:34px;
+height:34px;
+min-width:34px;
+border-radius:11px;
+display:grid;
+place-items:center;
+font-size:15px
+}
+
+.message.ai .avatar{
+background:linear-gradient(135deg,#7c5cff,#a68fff)
+}
+
+.message.user .avatar{background:#292d38}
+
+.message-content{min-width:0;flex:1}
+
+.message-name{
+font-size:12px;
+color:var(--muted);
+margin-bottom:5px
+}
+
+.message-text{
+line-height:1.7;
+color:#e7eaf1;
+overflow-wrap:anywhere
+}
+
+.message.user .message-text{
+display:inline-block;
+background:var(--user);
+border-radius:4px 13px 13px 13px;
+padding:10px 14px
+}
+
+.message-text strong{color:white}
+.message-text em{color:#d7d1f0}
+
+.message-text code{
+background:rgba(255,255,255,.08);
+border-radius:5px;
+padding:2px 6px;
+font-size:.9em
+}
+
+.nova-link{
+color:#a18cff!important;
+text-decoration:underline!important;
+cursor:pointer;
+word-break:break-word
+}
+
+.nova-link:hover{color:#c6baff!important}
+
+.code-wrap{
+margin:12px 0;
+border:1px solid var(--border);
+border-radius:10px;
+overflow:hidden;
+background:#090b10
+}
+
+.code-head{
+padding:8px 11px;
+border-bottom:1px solid var(--border);
+display:flex;
+justify-content:space-between;
+color:var(--muted);
+font-size:11px
+}
+
+.copy-code{
+background:transparent;
+color:var(--muted)
+}
+
+.copy-code:hover{color:white}
+
+pre{
+padding:14px;
+overflow-x:auto
+}
+
+pre code{
+background:none;
+padding:0;
+color:#dfe3ec
+}
+
+.message-actions{
+display:flex;
+gap:5px;
+margin-top:8px
+}
+
+.action-btn{
+background:transparent;
+color:#737b8d;
+padding:4px 7px;
+border-radius:6px;
+font-size:12px
+}
+
+.action-btn:hover{
+color:white;
+background:rgba(255,255,255,.06)
+}
+
+.typing{
+display:flex;
+gap:5px;
+padding:8px 0
+}
+
+.typing span{
+width:7px;
+height:7px;
+border-radius:50%;
+background:#9a91bd;
+animation:bounce 1s infinite
+}
+
+.typing span:nth-child(2){animation-delay:.15s}
+.typing span:nth-child(3){animation-delay:.3s}
+
+@keyframes bounce{
+0%,60%,100%{transform:translateY(0);opacity:.4}
+30%{transform:translateY(-5px);opacity:1}
+}
+
+.input-area{
+position:absolute;
+bottom:0;
+left:270px;
+right:0;
+padding:20px 22px 24px;
+background:linear-gradient(transparent,var(--bg) 30%)
+}
+
+.input-box{
+width:min(900px,100%);
+margin:auto;
+background:var(--panel);
+border:1px solid var(--border);
+border-radius:16px;
+display:flex;
+align-items:flex-end;
+padding:10px
+}
+
+#messageInput{
+flex:1;
+resize:none;
+border:0;
+outline:0;
+background:transparent;
+color:white;
+padding:9px 10px;
+max-height:160px;
+line-height:1.5
+}
+
+#messageInput::placeholder{color:#666e7d}
+
+.send-btn{
+width:42px;
+height:42px;
+border-radius:11px;
+background:var(--accent);
+color:white;
+display:grid;
+place-items:center;
+font-size:17px
+}
+
+.send-btn:disabled{
+opacity:.45;
+cursor:not-allowed
+}
+
+.input-note{
+width:min(900px,100%);
+margin:8px auto 0;
+text-align:center;
+color:#545c6c;
+font-size:10px
+}
+
+.modal{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.65);
+backdrop-filter:blur(8px);
+display:none;
+align-items:center;
+justify-content:center;
+padding:20px;
+z-index:100
+}
+
+.modal.active{display:flex}
+
+.modal-card{
+width:min(500px,100%);
+background:#12151d;
+border:1px solid var(--border);
+border-radius:18px;
+padding:22px
+}
+
+.modal-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:20px
+}
+
+.close{
+background:transparent;
+color:var(--muted);
+font-size:22px
+}
+
+.setting-label{
+color:#b8bfcc;
+font-size:12px;
+margin-bottom:7px;
+display:block
+}
+
+.setting-input{
+width:100%;
+background:#0b0d12;
+color:white;
+border:1px solid var(--border);
+border-radius:9px;
+padding:11px;
+outline:none;
+margin-bottom:15px
+}
+
+.save-settings{
+width:100%;
+padding:11px;
+border-radius:9px;
+background:var(--accent);
+color:white;
+font-weight:600
+}
+
+.warning{
+background:rgba(255,180,60,.08);
+border:1px solid rgba(255,180,60,.15);
+color:#c7ad7b;
+border-radius:9px;
+padding:10px;
+font-size:11px;
+line-height:1.5;
+margin-bottom:15px
+}
+
+@media(max-width:750px){
+.sidebar{
+position:fixed;
+left:-280px;
+top:0;
+bottom:0;
+transition:.25s
+}
+
+.sidebar.open{left:0}
+
+.mobile-menu{display:block}
+
+.input-area{
+left:0;
+padding-left:12px;
+padding-right:12px
+}
+
+.chat-inner{
+padding-left:13px;
+padding-right:13px
+}
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<aside class="sidebar" id="sidebar">
+
+<div class="logo">
+<div class="logo-icon">✦</div>
+<div class="logo-text">PixelPie <span>AI</span></div>
+</div>
+
+<button class="new-chat" onclick="newChat()">＋ New chat</button>
+
+<div class="history-title">Recent chats</div>
+
+<div class="history" id="history"></div>
+
+<div class="sidebar-bottom">
+<button class="settings-btn" onclick="openSettings()">⚙ Settings</button>
+</div>
+
+</aside>
+
+<main class="main">
+
+<header class="topbar">
+
+<button class="mobile-menu" onclick="toggleSidebar()">☰</button>
+
+<div class="status-dot"></div>
+
+<div>
+<div class="top-title">PixelPie AI</div>
+<div class="top-subtitle">AI assistant</div>
+</div>
+
+</header>
+
+<section class="chat" id="chat">
+
+<div class="chat-inner" id="chatInner">
+
+<div class="welcome" id="welcome">
+
+<div class="welcome-icon">✦</div>
+
+<h1>How can I help?</h1>
+
+<p>
+I'm PixelPie AI. Ask me about almost anything —
+coding, science, games, school, technology,
+ideas, writing and much more.
+</p>
+
+<div class="suggestions">
+
+<button class="suggestion"
+onclick="useSuggestion('Explain how black holes work')">
+Explain black holes
+</button>
+
+<button class="suggestion"
+onclick="useSuggestion('Help me create a website')">
+Create a website
+</button>
+
+<button class="suggestion"
+onclick="useSuggestion('Give me some interesting facts')">
+Interesting facts
+</button>
+
+<button class="suggestion"
+onclick="useSuggestion('What can you help me with?')">
+What can you do?
+</button>
+
+</div>
+</div>
+
+</div>
+</section>
+
+<div class="input-area">
+
+<div class="input-box">
+
+<textarea
+id="messageInput"
+rows="1"
+placeholder="Message PixelPie AI..."
+onkeydown="handleKey(event)"
+oninput="autoResize(this)"
+></textarea>
+
+<button
+class="send-btn"
+id="sendBtn"
+onclick="sendMessage()">↑</button>
+
+</div>
+
+<div class="input-note">
+PixelPie AI can make mistakes. Check important information.
+</div>
+
+</div>
+
+</main>
+</div>
+
+
+<!-- SETTINGS -->
+
+<div class="modal" id="settingsModal">
+
+<div class="modal-card">
+
+<div class="modal-header">
+
+<h3>PixelPie AI Settings</h3>
+
+<button class="close" onclick="closeSettings()">×</button>
+
+</div>
+
+<div class="warning">
+Your API key is stored locally in this browser.
+Do not publish your API key in a public website.
+</div>
+
+<label class="setting-label">OpenRouter API Key</label>
+
+<input
+id="apiKey"
+class="setting-input"
+type="password"
+placeholder="sk-or-v1-..."
+>
+
+<label class="setting-label">Model</label>
+
+<input
+id="modelInput"
+class="setting-input"
+value="openai/gpt-4o-mini"
+>
+
+<button class="save-settings" onclick="saveSettings()">
+Save settings
+</button>
+
+</div>
+</div>
+
+
+<script>
+
+/* =====================================================
+   PIXELPIE AI
+===================================================== */
+
+const OPENROUTER_URL =
+"https://openrouter.ai/api/v1/chat/completions";
+
+let apiKey =
+localStorage.getItem("pixelpie_api_key") || "";
+
+let selectedModel =
+localStorage.getItem("pixelpie_model") ||
+"openai/gpt-4o-mini";
+
+let conversation = [];
+
+let chats =
+JSON.parse(
+localStorage.getItem("pixelpie_chats") || "[]"
+);
+
+
+/* INIT */
+
+document.addEventListener("DOMContentLoaded",()=>{
+
+document.getElementById("apiKey").value=apiKey;
+
+document.getElementById("modelInput").value=selectedModel;
+
+renderHistory();
+
+document.getElementById("messageInput").focus();
+
+});
+
+
+/* SETTINGS */
+
+function openSettings(){
+
+document
+.getElementById("settingsModal")
+.classList.add("active");
+
+}
+
+function closeSettings(){
+
+document
+.getElementById("settingsModal")
+.classList.remove("active");
+
+}
+
+function saveSettings(){
+
+apiKey=
+document
+.getElementById("apiKey")
+.value.trim();
+
+selectedModel=
+document
+.getElementById("modelInput")
+.value.trim();
+
+localStorage.setItem(
+"pixelpie_api_key",
+apiKey
+);
+
+localStorage.setItem(
+"pixelpie_model",
+selectedModel
+);
+
+closeSettings();
+
+}
+
+
+/* SEND */
+
+async function sendMessage(){
+
+const input=
+document.getElementById("messageInput");
+
+const text=input.value.trim();
+
+if(!text)return;
+
+if(!apiKey){
+
+openSettings();
+
+setTimeout(()=>{
+alert(
+"Please enter your OpenRouter API key in Settings."
+);
+},100);
+
+return;
+}
+
+input.value="";
+
+autoResize(input);
+
+hideWelcome();
+
+addMessage("user",text);
+
+conversation.push({
+role:"user",
+content:text
+});
+
+const sendBtn=
+document.getElementById("sendBtn");
+
+sendBtn.disabled=true;
+
+const typingId=showTyping();
+
+try{
+
+const answer=
+await askOpenRouter(conversation);
+
+removeTyping(typingId);
+
+addMessage("ai",answer);
+
+conversation.push({
+role:"assistant",
+content:answer
+});
+
+saveCurrentChat();
+
+}catch(error){
+
+removeTyping(typingId);
+
+addMessage(
+"ai",
+"**PixelPie AI Error**\n\n"+error.message
+);
+
+}finally{
+
+sendBtn.disabled=false;
+
+input.focus();
+
+}
+
+}
+
+
+/* OPENROUTER */
+
+async function askOpenRouter(messages){
+
+const response=
+await fetch(
+OPENROUTER_URL,
+{
+method:"POST",
+
+headers:{
+"Content-Type":"application/json",
+"Authorization":"Bearer "+apiKey,
+"HTTP-Referer":window.location.href,
+"X-Title":"PixelPie AI"
+},
+
+body:JSON.stringify({
+
+model:selectedModel,
+
+messages:[
+
+{
+role:"system",
+
+content:
+`You are PixelPie AI, a helpful general-purpose AI assistant.
+
+You can answer questions about almost any safe topic.
+
+You are NOT restricted to Minecraft.
+
+You can help with:
+- programming
+- HTML
+- CSS
+- JavaScript
+- science
+- mathematics
+- technology
+- Minecraft
+- games
+- school
+- history
+- geography
+- writing
+- creativity
+- general knowledge
+- everyday questions
+
+Answer naturally and clearly.
+
+You may use Markdown.
+
+LINK RULE:
+When providing a website link, ALWAYS use Markdown:
+
+[YouTube](https://www.youtube.com/)
+[BBC Earth](https://www.bbcearth.com/)
+
+Do NOT output HTML tags such as:
+<a>
+href=
+class=
+target=
+rel=
+
+Do not put HTML markup into normal answers.`
+},
+
+...messages
+
+]
+
+})
+}
+);
+
+let data;
+
+try{
+
+data=await response.json();
+
+}catch{
+
+throw new Error(
+"OpenRouter returned an invalid response."
+);
+
+}
+
+if(!response.ok){
+
+const message=
+data?.error?.message ||
+"Unknown OpenRouter error.";
+
+if(response.status===401){
+
+throw new Error(
+"401 Unauthorized: your OpenRouter API key is invalid, expired, revoked, or unavailable."
+);
+
+}
+
+if(response.status===402){
+
+throw new Error(
+"402 Payment Required: this model/account requires available credits."
+);
+
+}
+
+if(response.status===429){
+
+throw new Error(
+"429 Too Many Requests: you are being rate-limited."
+);
+
+}
+
+throw new Error(
+`OpenRouter API Error ${response.status}: ${message}`
+);
+
+}
+
+const answer=
+data?.choices?.[0]?.message?.content;
+
+if(!answer){
+
+throw new Error(
+"OpenRouter returned no message."
+);
+
+}
+
+return answer;
+
+}
+
+
+/* ESCAPE */
+
+function escapeHTML(str){
+
+return String(str)
+.replace(/&/g,"&amp;")
+.replace(/</g,"&lt;")
+.replace(/>/g,"&gt;")
+.replace(/"/g,"&quot;")
+.replace(/'/g,"&#039;");
+
+}
+
+
+/* SAFE URL */
+
+function safeUrl(url){
+
+try{
+
+const parsed=new URL(url);
+
+if(
+parsed.protocol!=="http:" &&
+parsed.protocol!=="https:"
+){
+
+return null;
+
+}
+
+return parsed.href;
+
+}catch{
+
+return null;
+
+}
+
+}
+
+
+/* FORMAT MESSAGE */
+
+function formatMessage(text){
+
+const blocks=[];
+
+/* CODE BLOCKS */
+
+text=String(text).replace(
+/```([\w+#.-]*)[ \t]*\r?\n?([\s\S]*?)```/g,
+(match,language,code)=>{
+
+const index=blocks.length;
+
+blocks.push({
+language:language||"code",
+code:code
+});
+
+return `@@PIXELPIE_CODE_${index}@@`;
+
+}
+);
+
+
+/* ESCAPE */
+
+let html=escapeHTML(text);
+
+
+/* MARKDOWN LINKS */
+
+html=html.replace(
+/\[([^\]]+)\]\(\s*(https?:\/\/[^\s)]+)\s*\)/g,
+(match,title,url)=>{
+
+let cleanUrl=
+url.replace(/[.,!?;:]+$/,"");
+
+const valid=safeUrl(cleanUrl);
+
+if(!valid)return title;
+
+return(
+'<a class="nova-link" href="' +
+escapeHTML(valid) +
+'" target="_blank" rel="noopener noreferrer">' +
+title +
+'</a>'
+);
+
+}
+);
+
+
+/* NORMAL URLS */
+
+const parts=
+html.split(
+/(<a\b[^>]*>[\s\S]*?<\/a>)/gi
+);
+
+html=
+parts.map(part=>{
+
+if(/^<a\b/i.test(part)){
+
+return part;
+
+}
+
+return part.replace(
+/https?:\/\/[^\s<>"']+/g,
+url=>{
+
+let cleanUrl=
+url.replace(/[.,!?;:)\]}]+$/,"");
+
+const valid=safeUrl(cleanUrl);
+
+if(!valid)return url;
+
+return(
+'<a class="nova-link" href="' +
+escapeHTML(valid) +
+'" target="_blank" rel="noopener noreferrer">' +
+escapeHTML(cleanUrl) +
+'</a>'
+);
+
+}
+);
+
+}).join("");
+
+
+/* BOLD */
+
+html=html.replace(
+/\*\*(.*?)\*\*/g,
+"<strong>$1</strong>"
+);
+
+
+/* ITALIC */
+
+html=html.replace(
+/(?<!\*)\*([^*\n]+)\*(?!\*)/g,
+"<em>$1</em>"
+);
+
+
+/* INLINE CODE */
+
+html=html.replace(
+/`([^`\n]+)`/g,
+"<code>$1</code>"
+);
+
+
+/* NEWLINES */
+
+html=html.replace(
+/\r?\n/g,
+"<br>"
+);
+
+
+/* RESTORE CODE */
+
+blocks.forEach((block,index)=>{
+
+const code=escapeHTML(block.code);
+
+const language=
+escapeHTML(block.language);
+
+const codeHTML=`
+
+<div class="code-wrap">
+
+<div class="code-head">
+
+<span>${language}</span>
+
+<button
+class="copy-code"
+data-code-index="${index}">
+Copy
+</button>
+
+</div>
+
+<pre><code>${code}</code></pre>
+
+</div>
+
+`;
+
+html=html.replace(
+`@@PIXELPIE_CODE_${index}@@`,
+codeHTML
+);
+
+});
+
+return html;
+
+}
+
+
+/* ADD MESSAGE */
+
+function addMessage(type,text){
+
+const chatInner=
+document.getElementById("chatInner");
+
+const message=
+document.createElement("div");
+
+message.className=
+"message "+type;
+
+const avatar=
+document.createElement("div");
+
+avatar.className="avatar";
+
+avatar.textContent=
+type==="ai"?"✦":"👤";
+
+const content=
+document.createElement("div");
+
+content.className=
+"message-content";
+
+const name=
+document.createElement("div");
+
+name.className="message-name";
+
+name.textContent=
+type==="ai"?"PixelPie AI":"You";
+
+const messageText=
+document.createElement("div");
+
+messageText.className=
+"message-text";
+
+messageText.innerHTML=
+formatMessage(text);
+
+content.appendChild(name);
+
+content.appendChild(messageText);
+
+
+if(type==="ai"){
+
+const actions=
+document.createElement("div");
+
+actions.className=
+"message-actions";
+
+const copy=
+document.createElement("button");
+
+copy.className=
+"action-btn";
+
+copy.textContent="Copy";
+
+copy.onclick=()=>{
+
+navigator.clipboard
+.writeText(text)
+.then(()=>{
+
+copy.textContent="Copied!";
+
+setTimeout(
+()=>copy.textContent="Copy",
+1200
+);
+
+});
+
+};
+
+actions.appendChild(copy);
+
+content.appendChild(actions);
+
+}
+
+message.appendChild(avatar);
+
+message.appendChild(content);
+
+chatInner.appendChild(message);
+
+scrollToBottom();
+
+}
+
+
+/* TYPING */
+
+function showTyping(){
+
+const id=
+"typing_"+Date.now();
+
+const chatInner=
+document.getElementById("chatInner");
+
+const message=
+document.createElement("div");
+
+message.className="message ai";
+
+message.id=id;
+
+message.innerHTML=`
+
+<div class="avatar">✦</div>
+
+<div class="message-content">
+
+<div class="message-name">
+PixelPie AI
+</div>
+
+<div class="typing">
+
+<span></span>
+<span></span>
+<span></span>
+
+</div>
+
+</div>
+`;
+
+chatInner.appendChild(message);
+
+scrollToBottom();
+
+return id;
+
+}
+
+function removeTyping(id){
+
+const element=
+document.getElementById(id);
+
+if(element)element.remove();
+
+}
+
+
+/* UI */
+
+function hideWelcome(){
+
+const welcome=
+document.getElementById("welcome");
+
+if(welcome)welcome.remove();
+
+}
+
+function scrollToBottom(){
+
+const chat=
+document.getElementById("chat");
+
+setTimeout(
+()=>chat.scrollTop=chat.scrollHeight,
+20
+);
+
+}
+
+function useSuggestion(text){
+
+const input=
+document.getElementById("messageInput");
+
+input.value=text;
+
+sendMessage();
+
+}
+
+function handleKey(event){
+
+if(
+event.key==="Enter" &&
+!event.shiftKey
+){
+
+event.preventDefault();
+
+sendMessage();
+
+}
+
+}
+
+function autoResize(element){
+
+element.style.height="auto";
+
+element.style.height=
+Math.min(element.scrollHeight,160)+"px";
+
+}
+
+function toggleSidebar(){
+
+document
+.getElementById("sidebar")
+.classList.toggle("open");
+
+}
+
+
+/* NEW CHAT */
+
+function newChat(){
+
+conversation=[];
+
+document.getElementById(
+"chatInner"
+).innerHTML=`
+
+<div class="welcome" id="welcome">
+
+<div class="welcome-icon">✦</div>
+
+<h1>How can I help?</h1>
+
+<p>
+I'm PixelPie AI. Ask me about almost anything —
+coding, science, games, school, technology,
+ideas, writing and much more.
+</p>
+
+<div class="suggestions">
+
+<button class="suggestion"
+onclick="useSuggestion('Explain how black holes work')">
+Explain black holes
+</button>
+
+<button class="suggestion"
+onclick="useSuggestion('Help me create a website')">
+Create a website
+</button>
+
+<button class="suggestion"
+onclick="useSuggestion('Give me some interesting facts')">
+Interesting facts
+</button>
+
+<button class="suggestion"
+onclick="useSuggestion('What can you help me with?')">
+What can you do?
+</button>
+
+</div>
+
+</div>
+`;
+
+document
+.getElementById("messageInput")
+.focus();
+
+document
+.getElementById("sidebar")
+.classList.remove("open");
+
+}
+
+
+/* HISTORY */
+
+function saveCurrentChat(){
+
+if(conversation.length<2)return;
+
+const firstUser=
+conversation.find(
+message=>message.role==="user"
+);
+
+if(!firstUser)return;
+
+const title=
+firstUser.content
+.replace(/\s+/g," ")
+.slice(0,45);
+
+const item={
+title:title,
+messages:conversation,
+date:Date.now()
+};
+
+const existing=
+chats.findIndex(
+chat=>chat.title===title
+);
+
+if(existing>=0){
+
+chats[existing]=item;
+
+}else{
+
+chats.unshift(item);
+
+}
+
+chats=chats.slice(0,20);
+
+localStorage.setItem(
+"pixelpie_chats",
+JSON.stringify(chats)
+);
+
+renderHistory();
+
+}
+
+
+function renderHistory(){
+
+const history=
+document.getElementById("history");
+
+history.innerHTML="";
+
+chats.forEach((chat,index)=>{
+
+const item=
+document.createElement("div");
+
+item.className=
+"history-item";
+
+item.textContent=
+chat.title;
+
+item.onclick=()=>{
+loadChat(index);
+};
+
+history.appendChild(item);
+
+});
+
+}
+
+
+function loadChat(index){
+
+const chat=chats[index];
+
+if(!chat)return;
+
+conversation=
+JSON.parse(
+JSON.stringify(chat.messages)
+);
+
+const chatInner=
+document.getElementById("chatInner");
+
+chatInner.innerHTML="";
+
+conversation.forEach(message=>{
+
+addMessage(
+message.role==="user"
+?"user"
+:"ai",
+message.content
+);
+
+});
+
+document
+.getElementById("sidebar")
+.classList.remove("open");
+
+}
+
+
+/* COPY CODE */
+
+document.addEventListener(
+"click",
+event=>{
+
+const button=
+event.target.closest(".copy-code");
+
+if(!button)return;
+
+const codeBlock=
+button
+.closest(".code-wrap")
+?.querySelector("pre code");
+
+if(!codeBlock)return;
+
+navigator.clipboard
+.writeText(codeBlock.textContent)
+.then(()=>{
+
+const oldText=
+button.textContent;
+
+button.textContent="Copied!";
+
+setTimeout(
+()=>button.textContent=oldText,
+1200
+);
+
+});
+
+}
+);
+
+
+/* =====================================================
+   EXTERNAL LINKS
+   Simple browser link.
+   No window.open/about:blank/location.href.
+===================================================== */
+
+document.addEventListener(
+"click",
+event=>{
+
+const link=
+event.target.closest("a.nova-link");
+
+if(!link)return;
+
+const href=
+link.getAttribute("href");
+
+if(!href)return;
+
+/*
+ * Let the browser handle the normal HTTPS link.
+ *
+ * This avoids the previous:
+ * ERR_BLOCKED_BY_RESPONSE
+ * / SecurityError problem caused by
+ * manipulating another window's Location.
+ */
+
+if(
+href.startsWith("https://") ||
+href.startsWith("http://")
+){
+
+link.setAttribute(
+"target",
+"_blank"
+);
+
+link.setAttribute(
+"rel",
+"noopener noreferrer"
+);
+
+/*
+ * Do NOT call preventDefault().
+ * Do NOT call window.open().
+ * Do NOT modify window.location.
+ */
+
+}
+
+}
+);
+
+
+/* CLOSE MODAL */
+
+document
+.getElementById("settingsModal")
+.addEventListener(
+"click",
+event=>{
+
+if(
+event.target.id==="settingsModal"
+){
+
+closeSettings();
+
+}
+
+}
+);
+
+</script>
+
+</body>
+</html>
