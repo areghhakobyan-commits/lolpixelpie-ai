@@ -30,6 +30,7 @@
     "files": [
       "index.html",
       "main.js",
+      "preload.js",
       "package.json"
     ],
     "asar": true,
