@@ -81,7 +81,7 @@ jobs:
       - name: Verify exactly three installers
         run: |
           test "$(find release-assets -maxdepth 1 -type f | wc -l)" -eq 3
-          find release-assets -maxdepth 1 -type f -printf '%f\\n' | sort
+          find release-assets -maxdepth 1 -type f -printf '%f\n' | sort
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
