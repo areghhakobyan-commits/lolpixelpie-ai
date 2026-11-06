@@ -68,7 +68,7 @@ jobs:
       - name: Upload combined installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pixelpie-all-platform-installers
+          name: Pixel AI platform installers
           path: all-installers/*
           if-no-files-found: error
           retention-days: 30
