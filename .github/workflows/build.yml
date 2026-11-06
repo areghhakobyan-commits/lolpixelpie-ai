@@ -33,12 +33,13 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v7
         with:
-          node-version: 22
+          node-version: 24
+          package-manager-cache: false
 
       - name: Install dependencies
         run: npm install
@@ -47,7 +48,7 @@ jobs:
         run: npm run ${{ matrix.script }}
 
       - name: Upload only the installer
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ matrix.artifact }}
           path: ${{ matrix.installer }}
@@ -60,19 +61,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download macOS installer
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: pixelpie-macos
           path: release-assets
 
       - name: Download Windows installer
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: pixelpie-windows
           path: release-assets
 
       - name: Download Linux installer
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: pixelpie-linux
           path: release-assets
@@ -80,7 +81,7 @@ jobs:
       - name: Verify exactly three installers
         run: |
           test "$(find release-assets -maxdepth 1 -type f | wc -l)" -eq 3
-          find release-assets -maxdepth 1 -type f -printf '%f\n' | sort
+          find release-assets -maxdepth 1 -type f -printf '%f\\n' | sort
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
