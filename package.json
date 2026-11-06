@@ -13,9 +13,9 @@
     "start": "electron .",
     "dev": "electron .",
     "dist": "electron-builder",
-    "dist:mac": "electron-builder --mac dmg zip --publish never",
-    "dist:win": "electron-builder --win nsis --publish never",
-    "dist:linux": "electron-builder --linux AppImage deb --publish never"
+    "dist:mac": "electron-builder --mac dmg --x64 --publish never",
+    "dist:win": "electron-builder --win nsis --x64 --publish never",
+    "dist:linux": "electron-builder --linux AppImage --x64 --publish never"
   },
   "devDependencies": {
     "electron": "^38.0.0",
@@ -36,8 +36,7 @@
     "mac": {
       "category": "public.app-category.productivity",
       "target": [
-        "dmg",
-        "zip"
+        "dmg"
       ]
     },
     "win": {
@@ -55,8 +54,7 @@
     "linux": {
       "category": "Utility",
       "target": [
-        "AppImage",
-        "deb"
+        "AppImage"
       ],
       "maintainer": "PixelPie"
     }
