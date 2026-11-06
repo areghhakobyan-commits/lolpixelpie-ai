@@ -722,6 +722,16 @@ type="password"
 placeholder="sk-or-v1-..."
 >
 
+<label class="setting-label">OpenRouter Base URL</label>
+<input
+id="openrouterBaseUrl"
+class="setting-input"
+type="url"
+placeholder="https://openrouter.ai/api/v1"
+value="https://openrouter.ai/api/v1"
+>
+<div class="setting-hint">Use the API base address, usually ending in /api/v1. PixelPie adds /chat/completions automatically.</div>
+
 <label class="setting-label">Model</label>
 
 <input
@@ -754,8 +764,22 @@ Save settings
    PIXELPIE AI
 ===================================================== */
 
-const OPENROUTER_URL =
-"https://openrouter.ai/api/v1/chat/completions";
+const DEFAULT_OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
+
+function getOpenRouterChatUrl(){
+  let baseUrl = (localStorage.getItem("pixelpie_openrouter_base_url") || DEFAULT_OPENROUTER_BASE_URL).trim();
+  while (baseUrl.endsWith("/")) baseUrl = baseUrl.slice(0, -1);
+  let parsed;
+  try {
+    parsed = new URL(baseUrl);
+  } catch {
+    throw new Error("Enter a valid OpenRouter Base URL, including http:// or https://.");
+  }
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error("OpenRouter Base URL must use http:// or https://.");
+  }
+  return baseUrl + "/chat/completions";
+}
 
 let apiKey =
 localStorage.getItem("pixelpie_api_key") || "";
@@ -872,6 +896,7 @@ document.addEventListener("DOMContentLoaded",()=>{
 
 document.getElementById("apiKey").value=apiKey;
 document.getElementById("modelInput").value=selectedModel;
+document.getElementById("openrouterBaseUrl").value=localStorage.getItem("pixelpie_openrouter_base_url") || "https://openrouter.ai/api/v1";
 document.getElementById("chatProvider").value=localStorage.getItem("pixelpie_chat_provider") || "ollama";
 document.getElementById("ollamaUrl").value=localStorage.getItem("pixelpie_ollama_url") || "http://127.0.0.1:11434";
 document.getElementById("ollamaModel").value=localStorage.getItem("pixelpie_ollama_model") || "llama3.2";
@@ -924,6 +949,9 @@ localStorage.setItem(
 "pixelpie_model",
 selectedModel
 );
+let openrouterBaseUrl = document.getElementById("openrouterBaseUrl").value.trim() || "https://openrouter.ai/api/v1";
+while (openrouterBaseUrl.endsWith("/")) openrouterBaseUrl = openrouterBaseUrl.slice(0, -1);
+localStorage.setItem("pixelpie_openrouter_base_url", openrouterBaseUrl);
 localStorage.setItem("pixelpie_chat_provider", document.getElementById("chatProvider").value);
 localStorage.setItem("pixelpie_ollama_url", document.getElementById("ollamaUrl").value.trim() || "http://127.0.0.1:11434");
 localStorage.setItem("pixelpie_ollama_model", document.getElementById("ollamaModel").value.trim() || "llama3.2");
@@ -1035,7 +1063,7 @@ async function askOpenRouter(messages){
 
 const response=
 await fetch(
-OPENROUTER_URL,
+getOpenRouterChatUrl(),
 {
 method:"POST",
 
