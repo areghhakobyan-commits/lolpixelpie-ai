@@ -177,7 +177,7 @@ ipcMain.handle("local:drawthings-generate", async (_event, args) => {
   if (typeof encoded !== "string" || !encoded) {
     throw new Error("Draw Things returned no image. Check that its HTTP API is enabled and a model is loaded.");
   }
-  const base64 = encoded.replace(/^data:image\\/[^;]+;base64,/, "");
+  const base64 = encoded.replace(/^data:image\/[^;]+;base64,/, "");
   return "data:image/png;base64," + base64;
 });
 
