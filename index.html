@@ -634,16 +634,16 @@ What can you do?
 <div class="image-inner">
 <div class="image-card">
 <h2>Local image generation</h2>
-<p>Generate images on your computer through your local ComfyUI server. No image API key or cloud service is used.</p>
+<p>Generate images locally with Draw Things and your installed Stable Diffusion model. No image API key or cloud service is used.</p>
 <textarea id="imagePrompt" class="image-prompt" placeholder="Describe the image you want to create..."></textarea>
 <div class="image-actions">
 <button class="image-generate" id="generateImageBtn" onclick="generateImage()">✦ Generate image</button>
-<button class="mode-btn" onclick="checkComfyUI()">Check ComfyUI</button>
-<span class="image-status" id="imageStatus">ComfyUI: not checked</span>
+<button class="mode-btn" onclick="checkDrawThings()">Check Draw Things</button>
+<span class="image-status" id="imageStatus">Draw Things: not checked</span>
 </div>
 <div class="image-result" id="imageResult"><span class="image-status">Your generated image will appear here.</span></div>
 <div class="image-help">
-<strong>First-time setup:</strong> Install and start ComfyUI, export a workflow using <em>Save (API Format)</em>, then import that JSON file in PixelPie Settings. Choose the positive prompt node ID if automatic detection does not select the correct text node.
+<strong>First-time setup:</strong> Open Draw Things, enable its HTTP API Server, and keep the server running while generating. The default local address is http://127.0.0.1:7860.
 </div>
 </div>
 </div>
@@ -740,15 +740,10 @@ class="setting-input"
 value="openai/gpt-4o-mini"
 >
 
-<div class="setting-group-title">Image generation (ComfyUI)</div>
-<label class="setting-label">ComfyUI address</label>
-<input id="comfyUrl" class="setting-input" value="http://127.0.0.1:8188">
-<label class="setting-label">ComfyUI API workflow (.json)</label>
-<input id="comfyWorkflowFile" class="setting-file" type="file" accept=".json,application/json">
-<div class="setting-hint" id="workflowStatus">No workflow imported yet. In ComfyUI, use Save (API Format) to export one.</div>
-<label class="setting-label">Positive prompt node ID (optional)</label>
-<input id="comfyPromptNode" class="setting-input" placeholder="Leave blank for automatic detection">
-<div class="setting-hint">Usually a CLIPTextEncode node with a text input. The node ID depends on your workflow.</div>
+<div class="setting-group-title">Image generation (Draw Things)</div>
+<label class="setting-label">Draw Things HTTP API address</label>
+<input id="drawThingsUrl" class="setting-input" value="http://127.0.0.1:7860">
+<div class="setting-hint">Keep Draw Things open with API Server enabled. PixelPie connects only to a local address.</div>
 
 <button class="save-settings" onclick="saveSettings()">
 Save settings
@@ -798,34 +793,8 @@ localStorage.getItem("pixelpie_chats") || "[]"
 
 /* LOCAL MODEL AND IMAGE SERVICES */
 
-let importedComfyWorkflow = null;
-try {
-  importedComfyWorkflow = JSON.parse(localStorage.getItem("pixelpie_comfy_workflow") || "null");
-} catch {
-  importedComfyWorkflow = null;
-}
-
-function updateWorkflowStatus(){
-  const status = document.getElementById("workflowStatus");
-  if(status) status.textContent = importedComfyWorkflow ? "Workflow loaded: " + (localStorage.getItem("pixelpie_comfy_workflow_name") || "API workflow") : "No workflow imported yet. In ComfyUI, use Save (API Format) to export one.";
-}
-
-document.getElementById("comfyWorkflowFile").addEventListener("change", async (event)=>{
-  const file = event.target.files?.[0];
-  if(!file) return;
-  try {
-    const parsed = JSON.parse(await file.text());
-    if(!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("The selected file is not a ComfyUI API workflow.");
-    importedComfyWorkflow = parsed;
-    localStorage.setItem("pixelpie_comfy_workflow", JSON.stringify(parsed));
-    localStorage.setItem("pixelpie_comfy_workflow_name", file.name);
-    updateWorkflowStatus();
-  } catch(error) {
-    alert("Could not import workflow: " + error.message);
-  }
-});
-
 function switchMode(mode){
+
   const imageMode = mode === "image";
   document.getElementById("chat").style.display = imageMode ? "none" : "block";
   document.getElementById("chatInputArea").style.display = imageMode ? "none" : "block";
@@ -849,14 +818,14 @@ async function refreshOllamaModels(){
   }
 }
 
-async function checkComfyUI(){
+async function checkDrawThings(){
   const status = document.getElementById("imageStatus");
-  status.textContent = "Checking ComfyUI...";
+  status.textContent = "Checking Draw Things...";
   try {
-    const result = await window.pixelpieLocal.checkComfyUI(document.getElementById("comfyUrl").value.trim());
-    status.textContent = "ComfyUI connected" + (result.devices.length ? " · " + result.devices.join(", ") : "");
+    const result = await window.pixelpieLocal.checkDrawThings(document.getElementById("drawThingsUrl").value.trim());
+    status.textContent = "Draw Things connected · " + result.model + " · " + result.width + "×" + result.height;
   } catch(error) {
-    status.textContent = error.message + " Start ComfyUI and try again.";
+    status.textContent = error.message + " Make sure Draw Things is open and its HTTP API Server is online.";
   }
 }
 
@@ -866,22 +835,22 @@ async function generateImage(){
   const status = document.getElementById("imageStatus");
   const result = document.getElementById("imageResult");
   if(!prompt) { status.textContent = "Enter an image description first."; return; }
-  if(!importedComfyWorkflow) { status.textContent = "Import a ComfyUI API workflow in Settings first."; openSettings(); return; }
   button.disabled = true;
-  status.textContent = "Sending workflow to ComfyUI...";
+  status.textContent = "Sending prompt to Draw Things...";
   result.innerHTML = '<span class="image-status">Generating locally. This may take a while on an Intel Mac.</span>';
   try {
     const imageData = await window.pixelpieLocal.generateImage({
-      baseUrl: document.getElementById("comfyUrl").value.trim(),
-      workflow: importedComfyWorkflow,
-      promptNodeId: localStorage.getItem("pixelpie_comfy_prompt_node") || "",
-      text: prompt
+      baseUrl: document.getElementById("drawThingsUrl").value.trim(),
+      prompt,
+      width: 512,
+      height: 512,
+      steps: 16
     });
     const image = document.createElement("img");
-    image.alt = "Image generated locally by ComfyUI";
+    image.alt = "Image generated locally by Draw Things";
     image.src = imageData;
     result.replaceChildren(image);
-    status.textContent = "Image generated locally.";
+    status.textContent = "Image generated locally with Draw Things.";
   } catch(error) {
     result.innerHTML = '<span class="image-status">No image generated.</span>';
     status.textContent = error.message;
@@ -900,9 +869,7 @@ document.getElementById("openrouterBaseUrl").value=localStorage.getItem("pixelpi
 document.getElementById("chatProvider").value=localStorage.getItem("pixelpie_chat_provider") || "ollama";
 document.getElementById("ollamaUrl").value=localStorage.getItem("pixelpie_ollama_url") || "http://127.0.0.1:11434";
 document.getElementById("ollamaModel").value=localStorage.getItem("pixelpie_ollama_model") || "llama3.2";
-document.getElementById("comfyUrl").value=localStorage.getItem("pixelpie_comfy_url") || "http://127.0.0.1:8188";
-document.getElementById("comfyPromptNode").value=localStorage.getItem("pixelpie_comfy_prompt_node") || "";
-updateWorkflowStatus();
+document.getElementById("drawThingsUrl").value=localStorage.getItem("pixelpie_drawthings_url") || "http://127.0.0.1:7860";
 renderHistory();
 
 document.getElementById("messageInput").focus();
@@ -955,8 +922,7 @@ localStorage.setItem("pixelpie_openrouter_base_url", openrouterBaseUrl);
 localStorage.setItem("pixelpie_chat_provider", document.getElementById("chatProvider").value);
 localStorage.setItem("pixelpie_ollama_url", document.getElementById("ollamaUrl").value.trim() || "http://127.0.0.1:11434");
 localStorage.setItem("pixelpie_ollama_model", document.getElementById("ollamaModel").value.trim() || "llama3.2");
-localStorage.setItem("pixelpie_comfy_url", document.getElementById("comfyUrl").value.trim() || "http://127.0.0.1:8188");
-localStorage.setItem("pixelpie_comfy_prompt_node", document.getElementById("comfyPromptNode").value.trim());
+localStorage.setItem("pixelpie_drawthings_url", document.getElementById("drawThingsUrl").value.trim() || "http://127.0.0.1:7860");
 closeSettings();
 
 }
