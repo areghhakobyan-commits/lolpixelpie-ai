@@ -137,6 +137,50 @@ ipcMain.handle("local:comfy-generate", async (_event, args) => {
   throw new Error("Image generation is taking longer than expected. Check ComfyUI; the job may still be running.");
 });
 
+
+/* Draw Things local HTTP API */
+ipcMain.handle("local:drawthings-status", async (_event, baseUrl) => {
+  const base = localServiceUrl(baseUrl, "http://127.0.0.1:7860");
+  const data = await readJson(await fetch(base + "/", { signal: AbortSignal.timeout(15000) }), "Draw Things");
+  return {
+    ok: true,
+    model: data.model || "Loaded model",
+    width: data.width || 512,
+    height: data.height || 512,
+    steps: data.steps || 16
+  };
+});
+
+ipcMain.handle("local:drawthings-generate", async (_event, args) => {
+  const base = localServiceUrl(args?.baseUrl, "http://127.0.0.1:7860");
+  const prompt = String(args?.prompt || "").trim();
+  if (!prompt) throw new Error("Describe the image you want to create.");
+  const width = Math.max(256, Math.min(768, Number(args?.width) || 512));
+  const height = Math.max(256, Math.min(768, Number(args?.height) || 512));
+  const steps = Math.max(1, Math.min(30, Number(args?.steps) || 16));
+  const data = await readJson(await fetch(base + "/sdapi/v1/txt2img", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    signal: AbortSignal.timeout(600000),
+    body: JSON.stringify({
+      prompt,
+      negative_prompt: String(args?.negativePrompt || ""),
+      width,
+      height,
+      steps,
+      seed: -1,
+      batch_size: 1,
+      n_iter: 1
+    })
+  }), "Draw Things");
+  const encoded = data?.images?.[0];
+  if (typeof encoded !== "string" || !encoded) {
+    throw new Error("Draw Things returned no image. Check that its HTTP API is enabled and a model is loaded.");
+  }
+  const base64 = encoded.replace(/^data:image\\/[^;]+;base64,/, "");
+  return "data:image/png;base64," + base64;
+});
+
 function openExternal(url) {
   try {
     const parsed = new URL(url);
